@@ -113,3 +113,29 @@ const uint16_t PROGMEM encoder_map[][NUM_ENCODERS][NUM_DIRECTIONS] = {
   [3] = { ENCODER_CCW_CW(RGB_MOD, RGB_RMOD), ENCODER_CCW_CW(RGB_HUI, RGB_HUD), ENCODER_CCW_CW(RGB_VAI, RGB_VAD), ENCODER_CCW_CW(RGB_SAI, RGB_SAD), },
 };
 #endif
+
+#ifdef OLED_ENABLE
+oled_rotation_t oled_init_user(oled_rotation_t rotation) {
+    return OLED_ROTATION_270;   // 縦向き。横向きなら OLED_ROTATION_0
+}
+
+static void render_layer(void) {
+    oled_write_P(PSTR("Layer"), false);
+    switch (get_highest_layer(layer_state)) {
+        case 0: oled_write_P(PSTR("BASE "), false); break;
+        case 1: oled_write_P(PSTR("LOWER"), false); break;
+        case 2: oled_write_P(PSTR("UPPER"), false); break;
+        case 3: oled_write_P(PSTR("ADJST"), false); break;
+        default: oled_write_P(PSTR("?????"), false); break;
+    }
+}
+
+bool oled_task_user(void) {
+    if (is_keyboard_master()) {
+        render_layer();
+    } else {
+        oled_write_P(PSTR("Corne"), false);
+    }
+    return false;
+}
+#endif
