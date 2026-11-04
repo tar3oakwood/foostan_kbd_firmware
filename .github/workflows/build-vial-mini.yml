@@ -30,6 +30,9 @@ jobs:
           kb=crkbd make vial-qmk-init
           kb=crkbd kr=rev4_1/mini km=vial_mini make vial-qmk-compile
 
+      - name: Find firmware files
+        run: find . \( -name "*.uf2" -o -name "*.hex" -o -name "*.bin" \) -not -path "./.git/*" | head -20
+        
       - name: Upload firmware
         uses: actions/upload-artifact@v4
         with:
