@@ -30,13 +30,9 @@ jobs:
           kb=crkbd make vial-qmk-init
           kb=crkbd kr=rev4_1/mini km=vial_mini make vial-qmk-compile
 
-      - name: Find firmware files
-        run: find . \( -name "*.uf2" -o -name "*.hex" -o -name "*.bin" \) -not -path "./.git/*" | head -20
-        
       - name: Upload firmware
         uses: actions/upload-artifact@v4
         with:
           name: crkbd_rev4_1_mini_vial_mini
-          path: |
-            keyboards/crkbd/vial-kb/vial-qmk/.build/*.uf2
-            keyboards/crkbd/vial-kb/vial-qmk/.build/*.hex
+          path: keyboards/crkbd/vial-kb/vial-qmk/.build/crkbd_rev4_1_mini_vial_mini.uf2
+          if-no-files-found: error
