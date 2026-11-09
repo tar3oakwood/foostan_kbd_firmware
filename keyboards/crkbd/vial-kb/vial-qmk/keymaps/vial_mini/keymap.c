@@ -115,84 +115,90 @@ const uint16_t PROGMEM encoder_map[][NUM_ENCODERS][NUM_DIRECTIONS] = {
 #endif
 
 #ifdef OLED_ENABLE
+
 oled_rotation_t oled_init_user(oled_rotation_t rotation) {
-    return OLED_ROTATION_180;   // 上下反転
+    return OLED_ROTATION_270;
 }
 
-// 2倍サイズの文字を安全に描画するためのカスタム関数
-void oled_write_big_P(const char *data) {
-    // 2倍サイズ描画の高度な関数（第2引数trueで2倍スケーリング）
-    // バージョンによって引数が異なる問題を避けるため、一文字ずつ2倍描画します
-    while (char c = pgm_read_byte(data++)) {
-        char buf[2] = {c, '\0'};
-        // 1文字ずつ2倍モード(true)で反転なし(false)で書き込み
-        oled_write_with_scaling_P(PSTR(buf), false, true); 
-    }
-}
-
-// 修飾キーの状態をチェックして文字を描画するヘルパー関数
 void render_mod_status(void) {
-    uint8_t mods = get_mods() | get_oneshot_mods();
+    uint8_t mods =
+        get_mods() |
+        get_oneshot_mods() |
+        get_weak_mods();
 
-    // --- Ctrlの表示 ---
-    if (mods & MOD_MASK_CTRL) {
-        oled_write_with_scaling_P(PSTR("Ctl"), false, true);
-    } else {
-        oled_write_with_scaling_P(PSTR("---"), false, true);
-    }
-
-    oled_write_with_scaling_P(PSTR(" "), false, true);
-
-    // --- Altの表示 ---
-    if (mods & MOD_MASK_ALT) {
-        oled_write_with_scaling_P(PSTR("Alt"), false, true);
-    } else {
-        oled_write_with_scaling_P(PSTR("---"), false, true);
-    }
-
-    oled_write_with_scaling_P(PSTR(" "), false, true);
-
-    // --- Shiftの表示 ---
-    if (mods & MOD_MASK_SHIFT) {
-        oled_write_with_scaling_P(PSTR("Sh"), false, true); 
-    } else {
-        oled_write_with_scaling_P(PSTR("--"), false, true);
-    }
+    oled_write_P((mods & MOD_MASK_CTRL)  ? PSTR("C ") : PSTR("- "), false);
+    oled_write_P((mods & MOD_MASK_ALT)   ? PSTR("A ") : PSTR("- "), false);
+    oled_write_P((mods & MOD_MASK_SHIFT) ? PSTR("S")  : PSTR("-"), false);
 }
+
+static const char *layer_names[] = {
+    "L0",
+    "L1",
+    "L2",
+    "L3",
+    "L4",
+    "L5",
+    "L6",
+    "L7",
+    "L8",
+    "L9"
+};
 
 static void render_layer(void) {
-    // 第3引数を true にすることで、その関数だけで2倍サイズ描画になります
-    switch (get_highest_layer(layer_state)) {
-        case 0:  oled_write_with_scaling_P(PSTR("Layer0\n"), false, true); break;
-        case 1:  oled_write_with_scaling_P(PSTR("Layer1\n"), false, true); break;
-        case 2:  oled_write_with_scaling_P(PSTR("Layer2\n"), false, true); break;
-        case 3:  oled_write_with_scaling_P(PSTR("Layer3\n"), false, true); break;
-        case 4:  oled_write_with_scaling_P(PSTR("Layer4\n"), false, true); break;
-        case 5:  oled_write_with_scaling_P(PSTR("Layer5\n"), false, true); break;
-        case 6:  oled_write_with_scaling_P(PSTR("Layer6\n"), false, true); break;
-        case 7:  oled_write_with_scaling_P(PSTR("Layer7\n"), false, true); break;
-        case 8:  oled_write_with_scaling_P(PSTR("Layer8\n"), false, true); break;
-        case 9:  oled_write_with_scaling_P(PSTR("Layer9\n"), false, true); break;
-        default: oled_write_with_scaling_P(PSTR("Unknown\n"), false, true); break;
+    uint8_t layer = get_highest_layer(layer_state);
+
+    if (layer < 10) {
+        oled_write_ln(layer_names[layer], false);
+    } else {
+        oled_write_ln_P(PSTR("UK"), false);
     }
+}
+
+static void render_wpm(void) {
+    char wpm_str[8];
+
+    snprintf(wpm_str, sizeof(wpm_str), "%03d", get_current_wpm());
+
+    oled_write_ln_P(PSTR("WPM"), false);
+    oled_write_ln(wpm_str, false);
 }
 
 bool oled_task_user(void) {
+
     if (is_keyboard_master()) {
+
+        oled_set_cursor(0, 0);
         render_layer();
+
+        oled_set_cursor(0, 2);
         render_mod_status();
+
+        oled_set_cursor(0, 4);
+        render_wpm();
+
+        oled_set_cursor(0, 7);
+        oled_write_P(PSTR("CRK"), false);
+
     } else {
-        oled_write_with_scaling_P(PSTR("Corne"), false, true);
+
+        oled_set_cursor(0, 0);
+        oled_write_ln_P(PSTR("CORNE"), false);
+
+        oled_set_cursor(0, 2);
+        oled_write_ln_P(PSTR("V4.1"), false);
+
+        oled_set_cursor(0, 4);
+        oled_write_ln_P(PSTR("VIAL"), false);
     }
-  return false;
+
+    return false;
 }
 
-// ★追加：キーを押した瞬間にOLEDの描画を強制更新する処理
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     if (record->event.pressed) {
-        // キーが押されたら、OLEDの省電力タイマーなどをリセットして即時描画タスクを走らせる
-        oled_on(); 
+        oled_on();
     }
-    return true; // 通常のキー処理を継続
+    return true;
 }
+
 #endif
