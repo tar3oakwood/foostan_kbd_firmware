@@ -129,7 +129,7 @@ void render_mod_status(void) {
 
     // --- Ctrlの表示 ---
     if (mods & MOD_MASK_CTRL) {
-        oled_write_P(PSTR("CTL"), false); // 反転はさせないので第2引数はfalse
+        oled_write_P(PSTR("Ctl"), false); // 反転はさせないので第2引数はfalse
     } else {
         oled_write_P(PSTR("---"), false);
     }
@@ -138,7 +138,7 @@ void render_mod_status(void) {
 
     // --- Altの表示 ---
     if (mods & MOD_MASK_ALT) {
-        oled_write_P(PSTR("ALT"), false);
+        oled_write_P(PSTR("Alt"), false);
     } else {
         oled_write_P(PSTR("---"), false);
     }
