@@ -116,13 +116,13 @@ const uint16_t PROGMEM encoder_map[][NUM_ENCODERS][NUM_DIRECTIONS] = {
 
 #ifdef OLED_ENABLE
 oled_rotation_t oled_init_user(oled_rotation_t rotation) {
-    return OLED_ROTATION_270;   // 縦向き。横向きなら OLED_ROTATION_0
+    return OLED_ROTATION_0;   // 縦向き。横向きなら OLED_ROTATION_0
 }
 
 static void render_layer(void) {
     oled_write_P(PSTR("Layer"), false);
     switch (get_highest_layer(layer_state)) {
-        case 0: oled_write_P(PSTR("BASE "), false); break;
+        case 0: oled_write_P(PSTR("Layer0"), false); break;
         case 1: oled_write_P(PSTR("LOWER"), false); break;
         case 2: oled_write_P(PSTR("UPPER"), false); break;
         case 3: oled_write_P(PSTR("ADJST"), false); break;
