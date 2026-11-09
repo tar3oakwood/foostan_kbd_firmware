@@ -128,7 +128,7 @@ void render_mod_status(void) {
 
     // --- Ctrlの表示 (3文字) ---
     if (mods & MOD_MASK_CTRL) {
-        oled_write_P(PSTR("CTL"), true);
+        oled_write_P(PSTR("Ctl"), true);
     } else {
         oled_write_P(PSTR("---"), true);
     }
@@ -138,7 +138,7 @@ void render_mod_status(void) {
 
     // --- Altの表示 (3文字) ---
     if (mods & MOD_MASK_ALT) {
-        oled_write_P(PSTR("ALT"), true);
+        oled_write_P(PSTR("Alt"), true);
     } else {
         oled_write_P(PSTR("---"), true);
     }
@@ -149,9 +149,9 @@ void render_mod_status(void) {
     // --- Shiftの表示 (2文字に短縮して計10文字に収める) ---
     // ※ 3文字で「SFT」にしたい場合は、間のスペースを削って "CTLALTSFT" (9文字) に密着させれば入ります
     if (mods & MOD_MASK_SHIFT) {
-        oled_write_P(PSTR("SHF"), true); 
+        oled_write_P(PSTR("Sh"), true); 
     } else {
-        oled_write_P(PSTR("---"), true);
+        oled_write_P(PSTR("--"), true);
     }
 }
 
