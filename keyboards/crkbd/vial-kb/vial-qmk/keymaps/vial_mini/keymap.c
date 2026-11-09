@@ -119,62 +119,62 @@ oled_rotation_t oled_init_user(oled_rotation_t rotation) {
     return OLED_ROTATION_180;   // 上下反転
 }
 
+// 2倍サイズの文字を安全に描画するためのカスタム関数
+void oled_write_big_P(const char *data) {
+    // 2倍サイズ描画の高度な関数（第2引数trueで2倍スケーリング）
+    // バージョンによって引数が異なる問題を避けるため、一文字ずつ2倍描画します
+    while (char c = pgm_read_byte(data++)) {
+        char buf[2] = {c, '\0'};
+        // 1文字ずつ2倍モード(true)で反転なし(false)で書き込み
+        oled_write_with_scaling_P(PSTR(buf), false, true); 
+    }
+}
+
 // 修飾キーの状態をチェックして文字を描画するヘルパー関数
 void render_mod_status(void) {
-    // get_mods() だけでなく、一時的なモディファイア（OSMなど）も拾えるように get_mods() | get_oneshot_mods() にします
     uint8_t mods = get_mods() | get_oneshot_mods();
-
-    // ★ 描画スケールを「縦横2倍」に設定（これ以降の文字が大きくなります）
-    oled_set_user_scaling(OLED_SCALE_2X);
 
     // --- Ctrlの表示 ---
     if (mods & MOD_MASK_CTRL) {
-        oled_write_P(PSTR("Ctl"), false); // 反転はさせないので第2引数はfalse
+        oled_write_with_scaling_P(PSTR("Ctl"), false, true);
     } else {
-        oled_write_P(PSTR("---"), false);
+        oled_write_with_scaling_P(PSTR("---"), false, true);
     }
 
-    oled_write_P(PSTR(" "), false);
+    oled_write_with_scaling_P(PSTR(" "), false, true);
 
     // --- Altの表示 ---
     if (mods & MOD_MASK_ALT) {
-        oled_write_P(PSTR("Alt"), false);
+        oled_write_with_scaling_P(PSTR("Alt"), false, true);
     } else {
-        oled_write_P(PSTR("---"), false);
+        oled_write_with_scaling_P(PSTR("---"), false, true);
     }
 
-    oled_write_P(PSTR(" "), false);
+    oled_write_with_scaling_P(PSTR(" "), false, true);
 
     // --- Shiftの表示 ---
     if (mods & MOD_MASK_SHIFT) {
-        oled_write_P(PSTR("Sh"), false); 
+        oled_write_with_scaling_P(PSTR("Sh"), false, true); 
     } else {
-        oled_write_P(PSTR("--"), false);
+        oled_write_with_scaling_P(PSTR("--"), false, true);
     }
-
-    // ★ 描画スケールを元の「1倍（通常サイズ）」に戻しておく
-    oled_set_user_scaling(OLED_SCALE_1X);
 }
 
 static void render_layer(void) {
-    // レイヤー名も2倍サイズで描画する
-    oled_set_user_scaling(OLED_SCALE_2X);
-  
+    // 第3引数を true にすることで、その関数だけで2倍サイズ描画になります
     switch (get_highest_layer(layer_state)) {
-        case 0:  oled_write_ln_P(PSTR("Layer0"), false); break;
-        case 1:  oled_write_ln_P(PSTR("Layer1"), false); break;
-        case 2:  oled_write_ln_P(PSTR("Layer2"), false); break;
-        case 3:  oled_write_ln_P(PSTR("Layer3"), false); break;
-        case 4:  oled_write_ln_P(PSTR("Layer4"), false); break;
-        case 5:  oled_write_ln_P(PSTR("Layer5"), false); break;
-        case 6:  oled_write_ln_P(PSTR("Layer6"), false); break;
-        case 7:  oled_write_ln_P(PSTR("Layer7"), false); break;
-        case 8:  oled_write_ln_P(PSTR("Layer8"), false); break;
-        case 9:  oled_write_ln_P(PSTR("Layer9"), false); break;
-        default: oled_write_ln_P(PSTR("Unknown"), false); break;
+        case 0:  oled_write_with_scaling_P(PSTR("Layer0\n"), false, true); break;
+        case 1:  oled_write_with_scaling_P(PSTR("Layer1\n"), false, true); break;
+        case 2:  oled_write_with_scaling_P(PSTR("Layer2\n"), false, true); break;
+        case 3:  oled_write_with_scaling_P(PSTR("Layer3\n"), false, true); break;
+        case 4:  oled_write_with_scaling_P(PSTR("Layer4\n"), false, true); break;
+        case 5:  oled_write_with_scaling_P(PSTR("Layer5\n"), false, true); break;
+        case 6:  oled_write_with_scaling_P(PSTR("Layer6\n"), false, true); break;
+        case 7:  oled_write_with_scaling_P(PSTR("Layer7\n"), false, true); break;
+        case 8:  oled_write_with_scaling_P(PSTR("Layer8\n"), false, true); break;
+        case 9:  oled_write_with_scaling_P(PSTR("Layer9\n"), false, true); break;
+        default: oled_write_with_scaling_P(PSTR("Unknown\n"), false, true); break;
     }
-
-    oled_set_user_scaling(OLED_SCALE_1X);
 }
 
 bool oled_task_user(void) {
@@ -182,10 +182,17 @@ bool oled_task_user(void) {
         render_layer();
         render_mod_status();
     } else {
-        oled_set_user_scaling(OLED_SCALE_2X);
-        oled_write_P(PSTR("Corne"), false);
-        oled_set_user_scaling(OLED_SCALE_1X);
+        oled_write_with_scaling_P(PSTR("Corne"), false, true);
     }
   return false;
+}
+
+// ★追加：キーを押した瞬間にOLEDの描画を強制更新する処理
+bool process_record_user(uint16_t keycode, keyrecord_t *record) {
+    if (record->event.pressed) {
+        // キーが押されたら、OLEDの省電力タイマーなどをリセットして即時描画タスクを走らせる
+        oled_on(); 
+    }
+    return true; // 通常のキー処理を継続
 }
 #endif
